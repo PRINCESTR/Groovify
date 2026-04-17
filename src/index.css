@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-groovify-black text-white font-sans overflow-hidden antialiased;
+  }
+}
+
+/* Custom Webkit Scrollbars for a sleek look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Base custom ranged slider styles to reuse */
+input[type=range] {
+  -webkit-appearance: none;
+  @apply w-full h-1 bg-white/30 rounded cursor-pointer transition-all duration-100 outline-none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  @apply w-full h-1 rounded;
+  background: linear-gradient(to right, white var(--val), rgba(255, 255, 255, 0.3) var(--val));
+}
+
+.group:hover input[type=range]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, #1db954 var(--val), rgba(255, 255, 255, 0.3) var(--val));
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  @apply w-3 h-3 rounded-full bg-white cursor-pointer opacity-0 transition-opacity duration-100;
+  margin-top: -4px;
+}
+
+.group:hover input[type=range]::-webkit-slider-thumb {
+  @apply opacity-100;
+}
