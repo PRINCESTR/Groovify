@@ -3,7 +3,6 @@ import { PlayerProvider } from './context/PlayerProvider';
 import Sidebar from './components/Sidebar';
 import MainView from './components/MainView';
 import Player from './components/Player';
-import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   return (
@@ -30,7 +29,6 @@ function App() {
           </div>
         </div>
       </BrowserRouter>
-      <Analytics />
     </PlayerProvider>
   );
 }

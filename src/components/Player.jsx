@@ -166,7 +166,7 @@ const Player = () => {
               />
             </div>
             <span className="text-[11px] font-black text-white/40 min-w-[40px]">
-              {formatTime(duration)}
+              {duration > 0 ? formatTime(duration) : 'Stream'}
             </span>
           </div>
         </div>

@@ -61,7 +61,7 @@ const Sidebar = () => {
       />
 
       {/* Top Nav Block */}
-      <div className="bg-white/5 rounded-xl px-4 py-5 flex flex-col gap-5 border border-white/5 shadow-2xl">
+      <div className="bg-white/5 rounded-xl px-4 py-5 flex flex-col gap-5 border border-white/5 shadow-2xl overflow-hidden">
         {navItems.map((item) => {
           const Icon = item.icon || Music || 'div';
           return (
@@ -83,7 +83,15 @@ const Sidebar = () => {
             </NavLink>
           );
         })}
-        
+
+        <button 
+           onClick={() => setIsImportOpen(true)}
+           className="flex items-center gap-4 text-sm font-bold text-groovify-text-sub hover:text-white transition-all duration-300 group"
+        >
+            <div className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center group-hover:bg-groovify-green transition-colors">
+                <Plus size={14} className="group-hover:text-black" />
+            </div>
+            Import YouTube Link
         </button>
       </div>
 
@@ -113,16 +121,6 @@ const Sidebar = () => {
 
         {/* Categories/Shortcuts */}
         <div className="px-2 mt-2 space-y-1">
-            <button 
-                onClick={() => setIsImportOpen(true)}
-                className="w-full flex items-center gap-3 p-3 rounded-lg text-sm font-bold text-groovify-text-sub hover:bg-white/10 hover:text-white transition-all duration-300 mb-2 group"
-            >
-                <div className="w-8 h-8 rounded bg-groovify-green/20 flex items-center justify-center shadow-lg group-hover:bg-groovify-green transition-colors">
-                    <Link size={16} className="text-groovify-green group-hover:text-black" />
-                </div>
-                Import Link
-            </button>
-
             <NavLink 
                 to="/library" 
                 className={({ isActive }) => 
