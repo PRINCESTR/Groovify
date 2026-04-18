@@ -240,6 +240,33 @@ const MainView = ({ view }) => {
                 </div>
                 <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-groovify-green/5 to-transparent pointer-events-none" />
               </div>
+
+              {/* Playback Error Alert */}
+              <AnimatePresence>
+                {context.playbackError && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="mb-6 overflow-hidden"
+                  >
+                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-between font-bold text-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                                <SearchIcon size={16} />
+                            </div>
+                            {context.playbackError}
+                        </div>
+                        <button 
+                            onClick={() => context.setPlaybackError(null)}
+                            className="text-red-400/60 hover:text-red-400"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                 {(searchQuery && searchResults.length > 0) ? (

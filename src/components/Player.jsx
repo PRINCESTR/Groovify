@@ -92,6 +92,7 @@ const Player = () => {
             className="w-14 h-14 bg-groovify-card rounded-lg shadow-2xl overflow-hidden relative cursor-pointer group flex-shrink-0"
             onClick={() => setIsFullScreen(true)}
           >
+
             <img src={currentSong.imageUrl} alt="cover" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                 <Maximize2 size={16} className="text-white" />
@@ -165,6 +166,7 @@ const Player = () => {
                 className="progress-slider"
               />
             </div>
+
             <span className="text-[11px] font-black text-white/40 min-w-[40px]">
               {duration > 0 ? formatTime(duration) : 'Stream'}
             </span>

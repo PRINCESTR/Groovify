@@ -15,6 +15,7 @@ export const PlayerProvider = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [playbackError, setPlaybackError] = useState(null);
   const watchdogInterval = useRef(null);
   
   // Dynamic Playlists
@@ -175,7 +176,14 @@ export const PlayerProvider = ({ children }) => {
   const handleDuration = (dur) => {
     if (dur && dur > 0) {
         setDuration(dur);
+        setPlaybackError(null);
     }
+  };
+
+  const handleError = (error) => {
+    console.error('ReactPlayer Error:', error);
+    setPlaybackError('Media playback failed. The source might be unavailable.');
+    setIsPlaying(false);
   };
   
   const seekTo = useCallback((seconds) => {
@@ -208,45 +216,49 @@ export const PlayerProvider = ({ children }) => {
     addTrackToPlaylist,
     removeTrackFromPlaylist,
     toggleLike,
-    isLiked
+    isLiked,
+    playbackError,
+    setPlaybackError
   }), [
     currentSong, isPlaying, volume, currentTime, duration, queue, 
     playlists, likedTracks, recentTracks, playSong, togglePlay, 
     playNext, playPrevious, setVolume, seekTo, addToQueue, 
     removeFromQueue, createPlaylist, deletePlaylist, addTrackToPlaylist, 
-    removeTrackFromPlaylist, toggleLike, isLiked
+    removeTrackFromPlaylist, toggleLike, isLiked, playbackError
   ]);
 
   return (
     <PlayerContext.Provider value={contextValue}>
       {children}
       {currentSong && currentSong.audioUrl && (
-        <ReactPlayer
-          ref={playerRef}
-          url={currentSong.audioUrl}
-          playing={isPlaying}
-          volume={volume}
-          onProgress={handleProgress}
-          onDuration={handleDuration}
-          onBuffer={handleBuffer}
-          onBufferEnd={handleBufferEnd}
-          onEnded={playNext}
-          width="0"
-          height="0"
-          style={{ display: 'none' }}
-          config={{
-            youtube: {
-              playerVars: { controls: 0, showinfo: 0, modestbranding: 1 }
-            },
-            file: {
-              forceAudio: true,
-              attributes: {
-                preload: 'auto',
-                crossOrigin: 'anonymous'
+        <div style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0.001, pointerEvents: 'none', overflow: 'hidden' }}>
+          <ReactPlayer
+            ref={playerRef}
+            url={currentSong.audioUrl}
+            playing={isPlaying}
+            volume={volume}
+            onProgress={handleProgress}
+            onDuration={handleDuration}
+            onBuffer={handleBuffer}
+            onBufferEnd={handleBufferEnd}
+            onError={handleError}
+            onEnded={playNext}
+            width="100%"
+            height="100%"
+            config={{
+              youtube: {
+                playerVars: { controls: 0, showinfo: 0, modestbranding: 1 }
+              },
+              file: {
+                forceAudio: true,
+                attributes: {
+                  preload: 'auto',
+                  crossOrigin: 'anonymous'
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
+        </div>
       )}
     </PlayerContext.Provider>
   );

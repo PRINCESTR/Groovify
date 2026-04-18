@@ -25,7 +25,7 @@ class JamendoService {
         title: track.name,
         artist: track.artist_name,
         imageUrl: track.image || track.album_image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500',
-        audioUrl: track.audio,
+        audioUrl: track.audio.replace('http:', 'https:'),
         duration: track.duration,
         source: 'Jamendo'
       }));
@@ -53,7 +53,7 @@ class JamendoService {
         title: track.name,
         artist: track.artist_name,
         imageUrl: track.image || track.album_image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500',
-        audioUrl: track.audio,
+        audioUrl: track.audio.replace('http:', 'https:'),
         duration: track.duration,
         source: 'Jamendo'
       }));
