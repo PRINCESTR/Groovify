@@ -1,12 +1,15 @@
-import { Home, Search, Library, Plus, Heart, Music, Trash2 } from 'lucide-react';
+import { Home, Search, Library, Plus, Heart, Music, Trash2, Link } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { PlayerContext } from '../context/PlayerContext';
 import { motion } from 'framer-motion';
+import ImportModal from './ImportModal';
+import SoundCloudService from '../services/SoundCloudService';
 
 const Sidebar = () => {
   const context = useContext(PlayerContext);
   const navigate = useNavigate();
+  const [isImportOpen, setIsImportOpen] = useState(false);
   
   // Hardened safety guard
   if (!context) {
@@ -17,7 +20,15 @@ const Sidebar = () => {
     );
   }
 
-  const { playlists, createPlaylist, deletePlaylist } = context;
+  const { playlists, createPlaylist, deletePlaylist, playSong } = context;
+
+  const handleImport = async (url) => {
+    const metadata = await SoundCloudService.fetchMetadata(url);
+    if (metadata) {
+        playSong(metadata);
+        navigate('/');
+    }
+  };
 
   const handleCreatePlaylist = () => {
     try {
@@ -43,6 +54,12 @@ const Sidebar = () => {
 
   return (
     <div className="w-[280px] h-full flex flex-col p-2 gap-2 bg-black/40 backdrop-blur-2xl border-r border-white/5 font-sans">
+      <ImportModal 
+        isOpen={isImportOpen} 
+        onClose={() => setIsImportOpen(false)} 
+        onImport={handleImport} 
+      />
+
       {/* Top Nav Block */}
       <div className="bg-white/5 rounded-xl px-4 py-5 flex flex-col gap-5 border border-white/5 shadow-2xl">
         {navItems.map((item) => {
@@ -66,6 +83,14 @@ const Sidebar = () => {
             </NavLink>
           );
         })}
+        
+        <button 
+           onClick={() => setIsImportOpen(true)}
+           className="flex items-center gap-4 text-sm font-bold text-groovify-text-sub hover:text-white transition-all duration-300"
+        >
+            <Link size={24} strokeWidth={2} />
+            Import Link
+        </button>
       </div>
 
       {/* Library Block */}

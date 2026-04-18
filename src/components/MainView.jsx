@@ -58,11 +58,11 @@ const MainView = ({ view }) => {
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
       try {
-        // Fetch from all sources in parallel
-        const [scResults, jamResults] = await Promise.all([
+        // Fetch from all sources in parallel with individual error handling
+        const [scResults, jamResults] = await Promise.allSettled([
             SoundCloudService.searchTracks(searchQuery),
             JamendoService.searchTracks(searchQuery)
-        ]);
+        ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
         
         // Interleave results for a balanced feed
         const combined = [];
@@ -74,7 +74,7 @@ const MainView = ({ view }) => {
         
         setSearchResults(combined);
       } catch (err) {
-        console.error("Search failed:", err);
+        console.error("Critical search error:", err);
       } finally {
         setIsSearching(false);
       }

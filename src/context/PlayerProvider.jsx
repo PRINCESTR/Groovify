@@ -222,7 +222,8 @@ export const PlayerProvider = ({ children }) => {
             file: {
               forceAudio: true,
               attributes: {
-                preload: 'auto'
+                preload: 'auto',
+                crossOrigin: 'anonymous'
               }
             }
           }}
