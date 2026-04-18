@@ -15,6 +15,7 @@ export const PlayerProvider = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
+  const watchdogInterval = useRef(null);
   
   // Dynamic Playlists
   const [playlists, setPlaylists] = useState(() => 
@@ -58,6 +59,21 @@ export const PlayerProvider = ({ children }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentTime]);
+
+  // Playback Watchdog: Ensures currentTime updates even if onProgress stalls
+  useEffect(() => {
+    if (isPlaying && !isBuffering) {
+        watchdogInterval.current = setInterval(() => {
+            setCurrentTime(prev => {
+                if (duration && prev >= duration) return prev;
+                return prev + 0.25; // High resolution update
+            });
+        }, 250);
+    } else {
+        clearInterval(watchdogInterval.current);
+    }
+    return () => clearInterval(watchdogInterval.current);
+  }, [isPlaying, isBuffering, duration]);
 
   const playSong = useCallback((song, fromQueue = false) => {
     if (!song) return;
@@ -146,7 +162,10 @@ export const PlayerProvider = ({ children }) => {
 
   const handleProgress = (state) => {
     if (!isBuffering) {
-        setCurrentTime(state.playedSeconds);
+        // Sync with actual player time if provided, otherwise watchdog handled it
+        if (Math.abs(state.playedSeconds - currentTime) > 1) {
+            setCurrentTime(state.playedSeconds);
+        }
     }
   };
 

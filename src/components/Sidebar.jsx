@@ -84,12 +84,6 @@ const Sidebar = () => {
           );
         })}
         
-        <button 
-           onClick={() => setIsImportOpen(true)}
-           className="flex items-center gap-4 text-sm font-bold text-groovify-text-sub hover:text-white transition-all duration-300"
-        >
-            <Link size={24} strokeWidth={2} />
-            Import Link
         </button>
       </div>
 
@@ -119,6 +113,16 @@ const Sidebar = () => {
 
         {/* Categories/Shortcuts */}
         <div className="px-2 mt-2 space-y-1">
+            <button 
+                onClick={() => setIsImportOpen(true)}
+                className="w-full flex items-center gap-3 p-3 rounded-lg text-sm font-bold text-groovify-text-sub hover:bg-white/10 hover:text-white transition-all duration-300 mb-2 group"
+            >
+                <div className="w-8 h-8 rounded bg-groovify-green/20 flex items-center justify-center shadow-lg group-hover:bg-groovify-green transition-colors">
+                    <Link size={16} className="text-groovify-green group-hover:text-black" />
+                </div>
+                Import Link
+            </button>
+
             <NavLink 
                 to="/library" 
                 className={({ isActive }) => 

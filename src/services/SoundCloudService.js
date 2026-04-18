@@ -79,7 +79,7 @@ class SoundCloudService {
         try {
             // SoundCloud resolve endpoint requires client_id
             const res = await fetch(`${this.baseUrl}/resolve?url=${url}&client_id=${this.clientId}`);
-            if (!res.ok) throw new Error();
+            if (!res.ok) throw new Error('SoundCloud Resolve Status: ' + res.status);
             const track = await res.json();
             return {
                 id: `sc-${track.id}`,
@@ -90,7 +90,14 @@ class SoundCloudService {
                 duration: Math.floor(track.duration / 1000)
             };
         } catch (e) {
-             return null;
+             console.warn("SoundCloud resolve failed. Using fallback metadata:", e);
+             return {
+                id: `sc-fallback-${Date.now()}`,
+                title: "SoundCloud Track",
+                artist: "SoundCloud",
+                imageUrl: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=500",
+                audioUrl: url
+            };
         }
     }
 
