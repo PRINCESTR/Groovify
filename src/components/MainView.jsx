@@ -230,11 +230,15 @@ const MainView = ({ view }) => {
               animate="show"
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="mb-8 p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5">
-                <h2 className="text-4xl font-black text-white mb-2 tracking-tighter">
-                    {isSearching ? 'Searching multiple sources...' : searchQuery ? `Results: ${searchQuery}` : 'Explore'}
-                </h2>
-                <p className="text-groovify-text-sub font-bold opacity-60">Discover 100M+ tracks from around the web</p>
+              <div className="mb-8 p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 relative overflow-hidden">
+                <div className="relative z-10">
+                    <h2 className="text-4xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+                        {isSearching && <RefreshCw size={32} className="text-groovify-green animate-spin" />}
+                        {isSearching ? 'Searching multiple sources...' : searchQuery ? `Results: ${searchQuery}` : 'Explore'}
+                    </h2>
+                    <p className="text-groovify-text-sub font-bold opacity-60">Discover 100M+ tracks from around the web</p>
+                </div>
+                <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-groovify-green/5 to-transparent pointer-events-none" />
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">

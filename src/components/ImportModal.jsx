@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Link, Youtube, Music, ArrowRight, Loader2 } from 'lucide-react';
+import { X, Link, Youtube, Music, ArrowRight, RefreshCw } from 'lucide-react';
 
 const ImportModal = ({ isOpen, onClose, onImport }) => {
   const [url, setUrl] = useState('');
@@ -101,7 +101,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 className="animate-spin" size={20} />
+                    <RefreshCw className="animate-spin" size={20} />
                     Processing...
                   </>
                 ) : (
