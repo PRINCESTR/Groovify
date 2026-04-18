@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Link, Youtube, Music, ArrowRight, RefreshCw } from 'lucide-react';
+import { X, Link, Play, Music, ArrowRight, RefreshCw } from 'lucide-react';
 
 const ImportModal = ({ isOpen, onClose, onImport }) => {
   const [url, setUrl] = useState('');
@@ -76,7 +76,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
                   className="w-full h-14 pl-12 pr-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold outline-none focus:ring-2 focus:ring-groovify-green/50 focus:border-groovify-green/50 transition-all"
                 />
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20">
-                  {url.includes('youtube') ? <Youtube size={20} /> : url.includes('soundcloud') ? <Music size={20} /> : <Link size={20} />}
+                  {url.includes('youtube') ? <Play size={20} className="text-red-500" /> : url.includes('soundcloud') ? <Music size={20} className="text-orange-500" /> : <Link size={20} />}
                 </div>
               </div>
 
@@ -86,7 +86,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
 
               <div className="flex gap-4">
                 <div className="flex-1 p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                    <Youtube className="text-red-500" size={18} />
+                    <Play className="text-red-500" size={18} fill="currentColor" />
                     <span className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none">YouTube Support</span>
                 </div>
                 <div className="flex-1 p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3">

@@ -62,7 +62,7 @@ const Player = () => {
   };
 
   const toggleMute = () => {
-    setVolume(volume > 0 ? 0 : 0.8);
+    setVolume(volume > 0 ?  0 : 0.8);
   };
 
   if (!currentSong) {
