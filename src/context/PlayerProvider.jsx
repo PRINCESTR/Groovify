@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactPlayer from 'react-player';
 import { loadState, saveState } from '../data/localStorage';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 } from 'uuid';
 import { PlayerContext } from './PlayerContext';
 
 export const PlayerProvider = ({ children }) => {
@@ -115,7 +115,7 @@ export const PlayerProvider = ({ children }) => {
 
   const createPlaylist = useCallback((name) => {
     const newPlaylist = {
-        id: uuidv4(),
+        id: v4(),
         name: name || `New Playlist #${playlists.length}`,
         tracks: []
     };

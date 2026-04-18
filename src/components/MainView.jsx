@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Clock, Play, Music, Trash2, ListMusic } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Play, Music, Trash2, ListMusic } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { samplePlaylists, mockTracks } from '../data/mockData';
 import { PlayerContext } from '../context/PlayerContext';
