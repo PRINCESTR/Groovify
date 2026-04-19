@@ -16,15 +16,15 @@ export const PlayerProvider = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackError, setPlaybackError] = useState(null);
-  const watchdogInterval = useRef(null);
+  const audioRef = useRef(null);
+  const nextAudioRef = useRef(null);
+  const playerRef = useRef(null);
   
   // Dynamic Playlists
   const [playlists, setPlaylists] = useState(() => 
     appState.playlists || [{ id: 'fav', name: 'Liked Tracks', tracks: [] }]
   );
   const [recentTracks, setRecentTracks] = useState(() => appState.recent || []);
-
-  const playerRef = useRef(null);
 
   // Memoize likedTracks to prevent unnecessary recalculations
   const likedTracks = useMemo(() => 
@@ -59,22 +59,62 @@ export const PlayerProvider = ({ children }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTime]);
+  }, [currentTime, volume]);
 
-  // Playback Watchdog: Ensures currentTime updates even if onProgress stalls
+  // Determined whether to use native audio vs ReactPlayer
+  const isNativeSource = useMemo(() => {
+    if (!currentSong?.audioUrl) return false;
+    const url = currentSong.audioUrl.toLowerCase();
+    // Use native for direct files and Jamendo
+    return url.includes('.mp3') || 
+           url.includes('jamendo.com') || 
+           url.includes('bensound.com') ||
+           (!url.includes('youtube.com') && !url.includes('youtu.be') && !url.includes('soundcloud.com'));
+  }, [currentSong]);
+
+  // Sync volume to native player
   useEffect(() => {
-    if (isPlaying && !isBuffering) {
-        watchdogInterval.current = setInterval(() => {
-            setCurrentTime(prev => {
-                if (duration && prev >= duration) return prev;
-                return prev + 0.25; // High resolution update
-            });
-        }, 250);
-    } else {
-        clearInterval(watchdogInterval.current);
+    if (audioRef.current) {
+        audioRef.current.volume = volume;
     }
-    return () => clearInterval(watchdogInterval.current);
-  }, [isPlaying, isBuffering, duration]);
+  }, [volume]);
+
+  // Sync playing state to native player
+  useEffect(() => {
+    if (isNativeSource && audioRef.current) {
+        if (isPlaying) {
+            audioRef.current.play().catch(err => {
+                console.warn("Autoplay blocked or playback failed:", err);
+                // Don't set isPlaying(false) here, or it will toggle off immediately
+                // Instead, the user can manually resume via resumeAudio helper if needed
+            });
+        } else {
+            audioRef.current.pause();
+        }
+    }
+  }, [isPlaying, isNativeSource, currentSong]);
+
+  // Preloading Logic
+  useEffect(() => {
+    if (isPlaying && duration > 0 && (duration - currentTime) < 20 && queue.length > 0) {
+        const nextSong = queue[0];
+        if (nextAudioRef.current && nextAudioRef.current.src !== nextSong.audioUrl) {
+            nextAudioRef.current.src = nextSong.audioUrl;
+            nextAudioRef.current.load();
+        }
+    }
+  }, [isPlaying, currentTime, duration, queue]);
+
+  // Resume Audio Helper (Spotify-like resilience)
+  const resumeAudio = useCallback(async () => {
+    if (isNativeSource && audioRef.current && isPlaying) {
+        try {
+            await audioRef.current.play();
+        } catch (e) {
+            console.warn("Manual resume failed:", e);
+        }
+    }
+  }, [isNativeSource, isPlaying]);
 
   const playSong = useCallback((song, fromQueue = false) => {
     if (!song) return;
@@ -181,9 +221,8 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const handleError = (error) => {
-    console.error('ReactPlayer Error Details:', error);
+    console.error('Playback Error:', error);
     
-    // Check if it's a known restricted content error
     let message = 'Media playback failed. The source might be unavailable or restricted.';
     if (currentSong?.audioUrl?.includes('youtube.com')) {
         message = 'YouTube playback failed. This video might be restricted or blocked for embedding.';
@@ -194,13 +233,35 @@ export const PlayerProvider = ({ children }) => {
     setPlaybackError(message);
     setIsPlaying(false);
   };
+
+  // Native Audio Event Handlers
+  const onNativeTimeUpdate = () => {
+    if (audioRef.current) {
+        setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const onNativeLoadedMetadata = () => {
+    if (audioRef.current) {
+        setDuration(audioRef.current.duration);
+        setPlaybackError(null);
+    }
+  };
+
+  const onNativeWaiting = () => setIsBuffering(true);
+  const onNativePlaying = () => setIsBuffering(false);
+  const onNativeEnded = () => playNext();
+  const onNativeError = (e) => handleError(e);
   
   const seekTo = useCallback((seconds) => {
-    if (playerRef.current) {
+    if (isNativeSource && audioRef.current) {
+        audioRef.current.currentTime = seconds;
+        setCurrentTime(seconds);
+    } else if (playerRef.current) {
       playerRef.current.seekTo(seconds, 'seconds');
       setCurrentTime(seconds);
     }
-  }, []);
+  }, [isNativeSource]);
 
   const contextValue = useMemo(() => ({
     currentSong,
@@ -227,48 +288,70 @@ export const PlayerProvider = ({ children }) => {
     toggleLike,
     isLiked,
     playbackError,
-    setPlaybackError
+    setPlaybackError,
+    resumeAudio,
+    isBuffering
   }), [
     currentSong, isPlaying, volume, currentTime, duration, queue, 
     playlists, likedTracks, recentTracks, playSong, togglePlay, 
     playNext, playPrevious, setVolume, seekTo, addToQueue, 
     removeFromQueue, createPlaylist, deletePlaylist, addTrackToPlaylist, 
-    removeTrackFromPlaylist, toggleLike, isLiked, playbackError
+    removeTrackFromPlaylist, toggleLike, isLiked, playbackError, resumeAudio, isBuffering
   ]);
 
   return (
     <PlayerContext.Provider value={contextValue}>
       {children}
       {currentSong && currentSong.audioUrl && (
-        <div style={{ position: 'fixed', bottom: '-1000px', left: '-1000px', width: '400px', height: '400px', opacity: 0.01, pointerEvents: 'none', overflow: 'hidden', zIndex: -100 }}>
-          <ReactPlayer
-            ref={playerRef}
-            url={currentSong.audioUrl}
-            playing={isPlaying}
-            volume={volume}
-            onProgress={handleProgress}
-            onDuration={handleDuration}
-            onBuffer={handleBuffer}
-            onBufferEnd={handleBufferEnd}
-            onError={handleError}
-            onEnded={playNext}
-            width="100%"
-            height="100%"
-            config={{
-              youtube: {
-                playerVars: { controls: 0, showinfo: 0, modestbranding: 1, rel: 0 }
-              },
-              file: {
-                forceAudio: true,
-                attributes: {
-                  preload: 'auto',
-                  crossOrigin: 'anonymous',
-                  playsInline: true
-                }
-              }
-            }}
-          />
-        </div>
+        <>
+            {/* Main Audio Engine */}
+            {isNativeSource ? (
+                <audio
+                    ref={audioRef}
+                    src={currentSong.audioUrl}
+                    onTimeUpdate={onNativeTimeUpdate}
+                    onLoadedMetadata={onNativeLoadedMetadata}
+                    onWaiting={onNativeWaiting}
+                    onPlaying={onNativePlaying}
+                    onEnded={onNativeEnded}
+                    onError={onNativeError}
+                    preload="auto"
+                />
+            ) : (
+                <div style={{ position: 'fixed', bottom: '-1000px', left: '-1000px', width: '400px', height: '400px', opacity: 0.01, pointerEvents: 'none', overflow: 'hidden', zIndex: -100 }}>
+                    <ReactPlayer
+                        ref={playerRef}
+                        url={currentSong.audioUrl}
+                        playing={isPlaying}
+                        volume={volume}
+                        onProgress={handleProgress}
+                        onDuration={handleDuration}
+                        onBuffer={handleBuffer}
+                        onBufferEnd={handleBufferEnd}
+                        onError={handleError}
+                        onEnded={playNext}
+                        width="100%"
+                        height="100%"
+                        config={{
+                            youtube: {
+                                playerVars: { controls: 0, showinfo: 0, modestbranding: 1, rel: 0 }
+                            },
+                            file: {
+                                forceAudio: true,
+                                attributes: {
+                                    preload: 'auto',
+                                    crossOrigin: 'anonymous',
+                                    playsInline: true
+                                }
+                            }
+                        }}
+                    />
+                </div>
+            )}
+            
+            {/* Gapless Preloader */}
+            <audio ref={nextAudioRef} style={{ display: 'none' }} preload="auto" />
+        </>
       )}
     </PlayerContext.Provider>
   );

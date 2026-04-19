@@ -14,6 +14,7 @@ export const loadState = () => {
       return defaultState;
     }
     const parsed = JSON.parse(serialized);
+      
     if (!parsed || !Array.isArray(parsed.playlists)) {
         return defaultState;
     }
