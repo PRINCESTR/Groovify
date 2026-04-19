@@ -1,9 +1,9 @@
-import { useContext, useState, useRef, useEffect } from 'react';
+import { useContext, useState, useRef, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, MoreVertical, Plus, Heart, Music, ListPlus } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 
-const AlbumCard = ({ data }) => {
+const AlbumCard = memo(({ data }) => {
   const { playSong, currentSong, isPlaying, togglePlay, playlists, addTrackToPlaylist, toggleLike, isLiked } = useContext(PlayerContext);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -41,6 +41,7 @@ const AlbumCard = ({ data }) => {
         <img 
           src={data.imageUrl || 'https://images.unsplash.com/photo-1514525253361-bee8a48700ef?w=300'} 
           alt={data.title} 
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
         
@@ -76,7 +77,7 @@ const AlbumCard = ({ data }) => {
         <div className="flex items-center justify-between gap-2">
             <h3 className="text-white font-black text-base truncate tracking-tight flex-1">{data.title}</h3>
             {data.source && (
-                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-white/10 text-white/40 uppercase tracking-tighter">
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-white/10 text-white/40 uppercase tracking-tighter shadow-sm blur-[0.2px]">
                     {data.source}
                 </span>
             )}
@@ -128,6 +129,8 @@ const AlbumCard = ({ data }) => {
       </AnimatePresence>
     </motion.div>
   );
-};
+});
+
+AlbumCard.displayName = 'AlbumCard';
 
 export default AlbumCard;

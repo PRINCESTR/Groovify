@@ -105,6 +105,32 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [isPlaying, currentTime, duration, queue]);
 
+  // Playback Watchdog for non-native sources (YouTube/SoundCloud)
+  useEffect(() => {
+    if (!isPlaying || isNativeSource) return;
+
+    const interval = setInterval(() => {
+      const player = playerRef.current;
+      if (player) {
+        try {
+          const time = player.getCurrentTime();
+          const dur = player.getDuration();
+          
+          if (typeof time === 'number' && time > 0) {
+            setCurrentTime(time);
+          }
+          if (typeof dur === 'number' && dur > 0) {
+            setDuration(dur);
+          }
+        } catch (e) {
+          // Quietly fail
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, isNativeSource]); // Removed currentTime/duration from deps
+
   // Resume Audio Helper (Spotify-like resilience)
   const resumeAudio = useCallback(async () => {
     if (isNativeSource && audioRef.current && isPlaying) {
@@ -202,11 +228,13 @@ export const PlayerProvider = ({ children }) => {
   , [likedTracks]);
 
   const handleProgress = (state) => {
-    if (!isBuffering) {
-        // Sync with actual player time if provided, otherwise watchdog handled it
-        if (Math.abs(state.playedSeconds - currentTime) > 1) {
-            setCurrentTime(state.playedSeconds);
-        }
+    // Always update currentTime if it's playing and not seeking
+    // Remove the > 1 barrier for smoother tracking
+    setCurrentTime(state.playedSeconds);
+    
+    // Auto-detect duration if not yet set
+    if (duration === 0 && state.loadedSeconds > 0) {
+        setDuration(state.loadedSeconds);
     }
   };
 

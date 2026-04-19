@@ -1,12 +1,14 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Play, Music, Trash2, ListMusic, RefreshCw } from 'lucide-react';
+import { FaYoutube as Youtube } from 'react-icons/fa';
 import { useParams, useNavigate } from 'react-router-dom';
-import { samplePlaylists, mockTracks } from '../data/mockData';
 import { PlayerContext } from '../context/PlayerContext';
 import SoundCloudService from '../services/SoundCloudService';
 import JamendoService from '../services/JamendoService';
+import YouTubeService from '../services/YouTubeService';
 import AlbumCard from './AlbumCard';
+import { SongCardSkeleton } from './Skeleton';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,7 +31,9 @@ const MainView = ({ view }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedSource, setSelectedSource] = useState('all'); // 'all', 'jamendo', 'youtube'
   const [trendingTracks, setTrendingTracks] = useState([]);
+  
   const { 
     playSong, 
     playlists, 
@@ -53,25 +57,33 @@ const MainView = ({ view }) => {
   // Multi-source Search Logic
   useEffect(() => {
     if (view !== 'search' || !searchQuery || searchQuery.startsWith('http')) {
-        setSearchResults([]);
+        setSearchResults({ all: [], jamendo: [], youtube: [] });
         return;
     }
 
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
       try {
-        // Fetch from all sources in parallel with individual error handling
-        const [scResults, jamResults] = await Promise.allSettled([
+        // Fetch from all sources in parallel
+        const [scResults, jamResults, ytResults] = await Promise.allSettled([
             SoundCloudService.searchTracks(searchQuery),
-            JamendoService.searchTracks(searchQuery)
+            JamendoService.searchTracks(searchQuery),
+            YouTubeService.searchTracks(searchQuery)
         ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
         
-        // Interleave results for a balanced feed
-        const combined = [];
-        const maxLen = Math.max(scResults.length, jamResults.length);
+        // Combine results
+        const combined = {
+            all: [],
+            jamendo: jamResults,
+            youtube: ytResults
+        };
+
+        // Interleave for 'all' feed
+        const maxLen = Math.max(scResults.length, jamResults.length, ytResults.length);
         for (let i = 0; i < maxLen; i++) {
-            if (scResults[i]) combined.push(scResults[i]);
-            if (jamResults[i]) combined.push(jamResults[i]);
+            if (jamResults[i]) combined.all.push(jamResults[i]);
+            if (ytResults[i]) combined.all.push(ytResults[i]);
+            if (scResults[i]) combined.all.push(scResults[i]);
         }
         
         setSearchResults(combined);
@@ -85,13 +97,18 @@ const MainView = ({ view }) => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, view]);
 
+  // Filtered Results based on tab
+  const filteredResults = useMemo(() => {
+    if (!searchResults) return [];
+    if (selectedSource === 'all') return searchResults.all || [];
+    return searchResults[selectedSource] || [];
+  }, [searchResults, selectedSource]);
+
   // Fetch Trending Tracks for Home
   useEffect(() => {
     if (view === 'home' && trendingTracks.length === 0) {
         const fetchTrending = async () => {
             try {
-                // Currently prioritizing Jamendo for discovery as SoundCloud client_id 
-                // is often more restricted for trending endpoints
                 const results = await JamendoService.getTrending();
                 setTrendingTracks(results);
             } catch (err) {
@@ -106,12 +123,12 @@ const MainView = ({ view }) => {
     const val = e.target.value;
     setSearchQuery(val);
     
+    // Auto-import links
     if (val.includes('youtube.com/') || val.includes('youtu.be/') || val.includes('soundcloud.com/')) {
         const metadata = await SoundCloudService.fetchMetadata(val);
         if (metadata) {
             playSong(metadata);
             setSearchQuery('');
-            // Optional: navigate to search if it's the first import
         }
     }
   };
@@ -147,6 +164,7 @@ const MainView = ({ view }) => {
               placeholder="Search or paste link..."
               value={searchQuery}
               onChange={handleSearchInput}
+              onFocus={() => navigate('/search')}
               className="w-full h-9 pl-10 pr-4 rounded-full bg-white text-black text-sm font-bold placeholder:text-black/40 outline-none focus:ring-4 focus:ring-groovify-green/20 border-none transition-all"
             />
           </div>
@@ -214,11 +232,12 @@ const MainView = ({ view }) => {
                     Discovery & Trending
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                  {(trendingTracks.length > 0 ? trendingTracks : mockTracks).map(track => (
+                  {(trendingTracks.length > 0 ? trendingTracks : []).map(track => (
                     <motion.div key={track.id} variants={itemVariants}>
                       <AlbumCard data={track} />
                     </motion.div>
                   ))}
+                  {trendingTracks.length === 0 && Array(6).fill(0).map((_, i) => <SongCardSkeleton key={i} />)}
                 </div>
               </section>
             </motion.div>
@@ -234,11 +253,32 @@ const MainView = ({ view }) => {
             >
               <div className="mb-8 p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 relative overflow-hidden">
                 <div className="relative z-10">
-                    <h2 className="text-4xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+                    <h2 className="text-4xl font-black text-white mb-6 tracking-tighter flex items-center gap-4">
                         {isSearching && <RefreshCw size={32} className="text-groovify-green animate-spin" />}
                         {isSearching ? 'Searching multiple sources...' : searchQuery ? `Results: ${searchQuery}` : 'Explore'}
                     </h2>
-                    <p className="text-groovify-text-sub font-bold opacity-60">Discover 100M+ tracks from around the web</p>
+                    
+                    {/* Source Tabs */}
+                    <div className="flex items-center gap-2">
+                        {[
+                            { id: 'all', label: 'All Sources', icon: <SearchIcon size={14} /> },
+                            { id: 'jamendo', label: 'Jamendo Music', icon: <Music size={14} /> },
+                            { id: 'youtube', label: 'YouTube Video', icon: <Youtube size={14} /> }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setSelectedSource(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black transition-all
+                                    ${selectedSource === tab.id 
+                                        ? 'bg-white text-black shadow-lg scale-105' 
+                                        : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'}
+                                `}
+                            >
+                                {tab.icon}
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-groovify-green/5 to-transparent pointer-events-none" />
               </div>
@@ -271,24 +311,25 @@ const MainView = ({ view }) => {
               </AnimatePresence>
               
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                {(searchQuery && searchResults.length > 0) ? (
-                  searchResults.map(track => (
-                    <motion.div key={track.id} variants={itemVariants}>
-                      <AlbumCard data={track} />
-                    </motion.div>
-                  ))
-                ) : !isSearching && searchQuery ? (
-                   <div className="col-span-full py-32 flex flex-col items-center justify-center text-groovify-text-sub text-center opacity-50">
-                        <SearchIcon size={64} className="mb-4" />
-                        <p className="text-xl font-black">No matches found</p>
-                        <p className="font-bold">Try searching for a specific artist or paste a direct YouTube link</p>
-                   </div>
-                ) : (
-                    mockTracks.map(track => (
-                        <motion.div key={`browse-${track.id}`} variants={itemVariants}>
+                {isSearching ? (
+                    Array(12).fill(0).map((_, i) => <SongCardSkeleton key={i} />)
+                ) : filteredResults && filteredResults.length > 0 ? (
+                    filteredResults.map(track => (
+                        <motion.div key={track.id} variants={itemVariants}>
                             <AlbumCard data={track} />
                         </motion.div>
                     ))
+                ) : searchQuery ? (
+                   <div className="col-span-full py-32 flex flex-col items-center justify-center text-groovify-text-sub text-center opacity-50">
+                        <SearchIcon size={64} className="mb-4" />
+                        <p className="text-xl font-black">No matches found in {selectedSource}</p>
+                        <p className="font-bold">Try searching for a specific artist or switching tabs</p>
+                   </div>
+                ) : (
+                    <div className="col-span-full text-center py-20 text-white/20">
+                        <Music size={80} className="mx-auto mb-4 opacity-10" />
+                        <p className="text-xl font-black uppercase tracking-widest italic">Start your discovery journey...</p>
+                    </div>
                 )}
               </div>
             </motion.div>
