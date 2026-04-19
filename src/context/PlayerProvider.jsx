@@ -11,7 +11,7 @@ export const PlayerProvider = ({ children }) => {
   const [queue, setQueue] = useState(() => appState.queue || []);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(() => appState.volume || 0.8);
+  const [volume, setVolume] = useState(() => (appState.volume !== undefined && appState.volume !== null) ? appState.volume : 0.8);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -181,8 +181,17 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const handleError = (error) => {
-    console.error('ReactPlayer Error:', error);
-    setPlaybackError('Media playback failed. The source might be unavailable.');
+    console.error('ReactPlayer Error Details:', error);
+    
+    // Check if it's a known restricted content error
+    let message = 'Media playback failed. The source might be unavailable or restricted.';
+    if (currentSong?.audioUrl?.includes('youtube.com')) {
+        message = 'YouTube playback failed. This video might be restricted or blocked for embedding.';
+    } else if (currentSong?.audioUrl?.includes('soundcloud.com')) {
+        message = 'SoundCloud playback failed. The track might be private or geo-blocked.';
+    }
+    
+    setPlaybackError(message);
     setIsPlaying(false);
   };
   
@@ -231,7 +240,7 @@ export const PlayerProvider = ({ children }) => {
     <PlayerContext.Provider value={contextValue}>
       {children}
       {currentSong && currentSong.audioUrl && (
-        <div style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0.001, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', bottom: '-1000px', left: '-1000px', width: '400px', height: '400px', opacity: 0.01, pointerEvents: 'none', overflow: 'hidden', zIndex: -100 }}>
           <ReactPlayer
             ref={playerRef}
             url={currentSong.audioUrl}
@@ -247,13 +256,14 @@ export const PlayerProvider = ({ children }) => {
             height="100%"
             config={{
               youtube: {
-                playerVars: { controls: 0, showinfo: 0, modestbranding: 1 }
+                playerVars: { controls: 0, showinfo: 0, modestbranding: 1, rel: 0 }
               },
               file: {
                 forceAudio: true,
                 attributes: {
                   preload: 'auto',
-                  crossOrigin: 'anonymous'
+                  crossOrigin: 'anonymous',
+                  playsInline: true
                 }
               }
             }}

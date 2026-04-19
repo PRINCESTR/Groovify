@@ -32,7 +32,8 @@ const Player = () => {
     seekTo,
     isLiked,
     toggleLike,
-    queue
+    queue,
+    isBuffering
   } = useContext(PlayerContext);
 
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -134,7 +135,9 @@ const Player = () => {
               onClick={togglePlay} 
               className="w-10 h-10 flex items-center justify-center bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
             >
-              {isPlaying ? (
+              {isBuffering ? (
+                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              ) : isPlaying ? (
                 <Pause size={22} fill="currentColor" />
               ) : (
                 <Play size={22} fill="currentColor" className="ml-1" />
@@ -292,7 +295,13 @@ const Player = () => {
                             onClick={togglePlay}
                             className="w-28 h-28 rounded-full bg-white flex items-center justify-center text-black shadow-2xl hover:scale-105 active:scale-90 transition-all hover:shadow-[0_0_40px_rgba(255,255,255,0.4)]"
                         >
-                            {isPlaying ? <Pause size={54} fill="currentColor" /> : <Play size={54} fill="currentColor" className="ml-3" />}
+                            {isBuffering ? (
+                                <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                            ) : isPlaying ? (
+                                <Pause size={54} fill="currentColor" />
+                            ) : (
+                                <Play size={54} fill="currentColor" className="ml-3" />
+                            )}
                         </button>
                         <SkipForward size={54} fill="white" onClick={playNext} className="text-white hover:scale-110 active:scale-90 transition-all cursor-pointer" />
                         <Repeat size={36} className="text-white/30 hover:text-white transition-all cursor-pointer hover:scale-110" />

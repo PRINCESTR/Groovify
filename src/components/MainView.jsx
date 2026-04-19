@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Play, Music, Trash2, ListMusic } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Play, Music, Trash2, ListMusic, RefreshCw } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { samplePlaylists, mockTracks } from '../data/mockData';
 import { PlayerContext } from '../context/PlayerContext';
@@ -33,12 +33,14 @@ const MainView = ({ view }) => {
   const { 
     playSong, 
     playlists, 
-    likedTracks, // Ensure likedTracks is pulled from context if not already
+    likedTracks, 
     recentTracks, 
     removeTrackFromPlaylist,
     deletePlaylist,
     toggleLike,
-    isLiked 
+    isLiked,
+    playbackError,
+    setPlaybackError
   } = useContext(PlayerContext);
 
   const getGreeting = () => {
@@ -243,7 +245,7 @@ const MainView = ({ view }) => {
 
               {/* Playback Error Alert */}
               <AnimatePresence>
-                {context.playbackError && (
+                {playbackError && (
                   <motion.div 
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
@@ -255,10 +257,10 @@ const MainView = ({ view }) => {
                             <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
                                 <SearchIcon size={16} />
                             </div>
-                            {context.playbackError}
+                            {playbackError}
                         </div>
                         <button 
-                            onClick={() => context.setPlaybackError(null)}
+                            onClick={() => setPlaybackError(null)}
                             className="text-red-400/60 hover:text-red-400"
                         >
                             Dismiss
