@@ -352,13 +352,14 @@ export const PlayerProvider = ({ children }) => {
                         position: 'fixed', 
                         bottom: '24px', 
                         right: '24px', 
-                        width: '200px', 
-                        height: '120px', 
-                        opacity: 0.001, 
+                        width: '300px', 
+                        height: '200px', 
+                        opacity: 0.1, // Slightly more visible for sync confirmation
                         pointerEvents: 'none', 
-                        zIndex: -50,
+                        zIndex: 1000, // Ensure it's in front of everything
                         overflow: 'hidden',
-                        borderRadius: '12px'
+                        borderRadius: '12px',
+                        background: 'black'
                     }}
                 >
                     <ReactPlayer
@@ -374,14 +375,16 @@ export const PlayerProvider = ({ children }) => {
                         onEnded={playNext}
                         width="100%"
                         height="100%"
+                        playsinline
                         config={{
                             youtube: {
                                 playerVars: { 
-                                    controls: 0, 
-                                    showinfo: 0, 
-                                    modestbranding: 1, 
+                                    autoplay: 1,
+                                    controls: 1, // Temporarily enabled to see if it fixes the block
+                                    playsinline: 1,
                                     rel: 0,
-                                    origin: window.location.origin
+                                    showinfo: 0,
+                                    enablejsapi: 1
                                 }
                             }
                         }}
