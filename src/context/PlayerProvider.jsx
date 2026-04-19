@@ -346,7 +346,21 @@ export const PlayerProvider = ({ children }) => {
                     preload="auto"
                 />
             ) : (
-                <div style={{ position: 'fixed', bottom: '-1000px', left: '-1000px', width: '400px', height: '400px', opacity: 0.01, pointerEvents: 'none', overflow: 'hidden', zIndex: -100 }}>
+                <div 
+                    id="youtube-player-container"
+                    style={{ 
+                        position: 'fixed', 
+                        bottom: '24px', 
+                        right: '24px', 
+                        width: '200px', 
+                        height: '120px', 
+                        opacity: 0.001, 
+                        pointerEvents: 'none', 
+                        zIndex: -50,
+                        overflow: 'hidden',
+                        borderRadius: '12px'
+                    }}
+                >
                     <ReactPlayer
                         ref={playerRef}
                         url={currentSong.audioUrl}
@@ -362,14 +376,12 @@ export const PlayerProvider = ({ children }) => {
                         height="100%"
                         config={{
                             youtube: {
-                                playerVars: { controls: 0, showinfo: 0, modestbranding: 1, rel: 0 }
-                            },
-                            file: {
-                                forceAudio: true,
-                                attributes: {
-                                    preload: 'auto',
-                                    crossOrigin: 'anonymous',
-                                    playsInline: true
+                                playerVars: { 
+                                    controls: 0, 
+                                    showinfo: 0, 
+                                    modestbranding: 1, 
+                                    rel: 0,
+                                    origin: window.location.origin
                                 }
                             }
                         }}
