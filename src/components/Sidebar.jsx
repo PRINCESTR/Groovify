@@ -1,15 +1,13 @@
 import { useContext, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Search, Library, Plus, Heart, Music, Video, ListMusic } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Home, Search, Library, Plus, Heart, Music, ListMusic } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import ImportModal from './ImportModal';
 
 const Sidebar = () => {
-  // Defensive Context Usage
-  const contextValue = useContext(PlayerContext);
-  const playlists = contextValue?.playlists || [];
-  const likedTracks = contextValue?.likedTracks || [];
+  const context = useContext(PlayerContext);
+  const playlists = context?.playlists || [];
+  const likedTracks = context?.likedTracks || [];
   
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -70,13 +68,13 @@ const Sidebar = () => {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav id="mobile-nav" className="fixed bottom-0 left-0 right-0 h-[70px] bg-black/95 backdrop-blur-xl border-t border-white/5 z-[100] flex md:hidden items-center justify-around px-2">
+      <nav id="mobile-nav" className="fixed bottom-0 left-0 right-0 h-[75px] bg-black/95 backdrop-blur-xl border-t border-white/5 z-[100] flex md:hidden items-center justify-around px-2 pb-2">
         <NavLink to="/" className={({ isActive }) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-white' : 'text-white/40'}`}>
-          <Home size={24} strokeWidth={isActive ? 2.5 : 2} />
+          <Home size={24} />
           <span className="text-[10px] font-black uppercase tracking-tighter">Home</span>
         </NavLink>
         <NavLink to="/search" className={({ isActive }) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-white' : 'text-white/40'}`}>
-          <Search size={24} strokeWidth={isActive ? 2.5 : 2} />
+          <Search size={24} />
           <span className="text-[10px] font-black uppercase tracking-tighter">Search</span>
         </NavLink>
         <button 
@@ -87,16 +85,20 @@ const Sidebar = () => {
           <span className="text-[10px] font-black uppercase tracking-tighter">Import</span>
         </button>
         <NavLink to="/playlist/fav" className={({ isActive }) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-white' : 'text-white/40'}`}>
-          <Library size={24} strokeWidth={isActive ? 2.5 : 2} />
+          <Library size={24} />
           <span className="text-[10px] font-black uppercase tracking-tighter">Library</span>
         </NavLink>
       </nav>
 
-      {isImportModalOpen && contextValue?.addTrackToPlaylist && (
+      {isImportModalOpen && (
         <ImportModal 
             isOpen={isImportModalOpen} 
             onClose={() => setIsImportModalOpen(false)} 
-            onImport={(url) => contextValue.importFromUrl?.(url)}
+            onImport={(url) => {
+                // We'll use this placeholder or add a real import handler in PlayerProvider if needed
+                console.log("Importing:", url);
+                setIsImportModalOpen(false);
+            }} 
         />
       )}
     </>
