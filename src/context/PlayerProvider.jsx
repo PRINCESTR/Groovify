@@ -133,12 +133,20 @@ export const PlayerProvider = ({ children }) => {
 
   // Resume Audio Helper (Spotify-like resilience)
   const resumeAudio = useCallback(async () => {
-    if (isNativeSource && audioRef.current && isPlaying) {
+    if (isPlaying) {
+      if (isNativeSource && audioRef.current) {
         try {
-            await audioRef.current.play();
+          await audioRef.current.play();
         } catch (e) {
-            console.warn("Manual resume failed:", e);
+          console.warn("Native manual resume failed:", e);
         }
+      } else if (playerRef.current) {
+        // For ReactPlayer (YouTube/SoundCloud), we toggle playing state or seek slightly 
+        // to force the browser to recognize the audio context
+        console.log("Attempting YouTube/SoundCloud manual resume...");
+        setIsPlaying(false);
+        setTimeout(() => setIsPlaying(true), 50);
+      }
     }
   }, [isNativeSource, isPlaying]);
 
@@ -151,6 +159,8 @@ export const PlayerProvider = ({ children }) => {
     });
 
     setCurrentSong(song);
+    setDuration(song.duration || 0);
+    setCurrentTime(0);
     setIsPlaying(true);
   }, []);
 
@@ -376,15 +386,17 @@ export const PlayerProvider = ({ children }) => {
                         width="100%"
                         height="100%"
                         playsinline
+                        muted={false}
                         config={{
                             youtube: {
                                 playerVars: { 
                                     autoplay: 1,
-                                    controls: 1, // Temporarily enabled to see if it fixes the block
+                                    controls: 1,
                                     playsinline: 1,
                                     rel: 0,
                                     showinfo: 0,
-                                    enablejsapi: 1
+                                    enablejsapi: 1,
+                                    iv_load_policy: 3
                                 }
                             }
                         }}
