@@ -3,6 +3,8 @@ import ReactPlayer from 'react-player';
 import { loadState, saveState } from '../data/localStorage';
 import { v4 } from 'uuid';
 import { PlayerContext } from './PlayerContext';
+import YouTubeService from '../services/YouTubeService';
+import JamendoService from '../services/JamendoService';
 
 export const PlayerProvider = ({ children }) => {
   // Use lazy initializer for state to avoid repeated heavy computation/IO
@@ -16,9 +18,15 @@ export const PlayerProvider = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackError, setPlaybackError] = useState(null);
+  
+  // Search State
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  
   const audioRef = useRef(null);
   const nextAudioRef = useRef(null);
   const playerRef = useRef(null);
+  const lastSearchTime = useRef(0);
   
   // Dynamic Playlists
   const [playlists, setPlaylists] = useState(() => 
@@ -48,7 +56,7 @@ export const PlayerProvider = ({ children }) => {
 
       if (e.code === 'Space') {
         e.preventDefault();
-        setIsPlaying(p => !p); // Directly toggle for speed
+        setIsPlaying(p => !p);
       } else if (e.code === 'ArrowRight') {
         seekTo(currentTime + 5);
       } else if (e.code === 'ArrowLeft') {
@@ -61,32 +69,26 @@ export const PlayerProvider = ({ children }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentTime, volume]);
 
-  // Determined whether to use native audio vs ReactPlayer
   const isNativeSource = useMemo(() => {
     if (!currentSong?.audioUrl) return false;
     const url = currentSong.audioUrl.toLowerCase();
-    // Use native for direct files and Jamendo
     return url.includes('.mp3') || 
            url.includes('jamendo.com') || 
            url.includes('bensound.com') ||
            (!url.includes('youtube.com') && !url.includes('youtu.be') && !url.includes('soundcloud.com'));
   }, [currentSong]);
 
-  // Sync volume to native player
   useEffect(() => {
     if (audioRef.current) {
         audioRef.current.volume = volume;
     }
   }, [volume]);
 
-  // Sync playing state to native player
   useEffect(() => {
     if (isNativeSource && audioRef.current) {
         if (isPlaying) {
             audioRef.current.play().catch(err => {
                 console.warn("Autoplay blocked or playback failed:", err);
-                // Don't set isPlaying(false) here, or it will toggle off immediately
-                // Instead, the user can manually resume via resumeAudio helper if needed
             });
         } else {
             audioRef.current.pause();
@@ -94,44 +96,42 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [isPlaying, isNativeSource, currentSong]);
 
-  // Preloading Logic
-  useEffect(() => {
-    if (isPlaying && duration > 0 && (duration - currentTime) < 20 && queue.length > 0) {
-        const nextSong = queue[0];
-        if (nextAudioRef.current && nextAudioRef.current.src !== nextSong.audioUrl) {
-            nextAudioRef.current.src = nextSong.audioUrl;
-            nextAudioRef.current.load();
+  // Search Implementation (Debounced & Parallel)
+  const searchTracks = useCallback(async (query) => {
+    if (!query || query.trim().length < 2) {
+        setSearchResults([]);
+        return;
+    }
+
+    const searchId = Date.now();
+    lastSearchTime.current = searchId;
+    setIsSearching(true);
+
+    try {
+        // Parallel fetching for high performance
+        const [jamendoTracks, youtubeTracks] = await Promise.all([
+            JamendoService.searchTracks(query).catch(e => { console.error(e); return []; }),
+            YouTubeService.searchTracks(query).catch(e => { console.error(e); return []; })
+        ]);
+
+        // Only update if this is still the latest search
+        if (lastSearchTime.current === searchId) {
+            // Interleave results for a diverse mix
+            const maxLength = Math.max(jamendoTracks.length, youtubeTracks.length);
+            const combined = [];
+            for (let i = 0; i < maxLength; i++) {
+                if (jamendoTracks[i]) combined.push(jamendoTracks[i]);
+                if (youtubeTracks[i]) combined.push(youtubeTracks[i]);
+            }
+            setSearchResults(combined);
+        }
+    } finally {
+        if (lastSearchTime.current === searchId) {
+            setIsSearching(false);
         }
     }
-  }, [isPlaying, currentTime, duration, queue]);
+  }, []);
 
-  // Playback Watchdog for non-native sources (YouTube/SoundCloud)
-  useEffect(() => {
-    if (!isPlaying || isNativeSource) return;
-
-    const interval = setInterval(() => {
-      const player = playerRef.current;
-      if (player) {
-        try {
-          const time = player.getCurrentTime();
-          const dur = player.getDuration();
-          
-          if (typeof time === 'number' && time > 0) {
-            setCurrentTime(time);
-          }
-          if (typeof dur === 'number' && dur > 0) {
-            setDuration(dur);
-          }
-        } catch (e) {
-          // Quietly fail
-        }
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, isNativeSource]); // Removed currentTime/duration from deps
-
-  // Resume Audio Helper (Spotify-like resilience)
   const resumeAudio = useCallback(async () => {
     if (isPlaying) {
       if (isNativeSource && audioRef.current) {
@@ -141,16 +141,13 @@ export const PlayerProvider = ({ children }) => {
           console.warn("Native manual resume failed:", e);
         }
       } else if (playerRef.current) {
-        // For ReactPlayer (YouTube/SoundCloud), we toggle playing state or seek slightly 
-        // to force the browser to recognize the audio context
-        console.log("Attempting YouTube/SoundCloud manual resume...");
         setIsPlaying(false);
         setTimeout(() => setIsPlaying(true), 50);
       }
     }
   }, [isNativeSource, isPlaying]);
 
-  const playSong = useCallback((song, fromQueue = false) => {
+  const playSong = useCallback((song) => {
     if (!song) return;
     
     setRecentTracks(prev => {
@@ -170,7 +167,7 @@ export const PlayerProvider = ({ children }) => {
     if (queue.length > 0) {
       const nextSong = queue[0];
       setQueue(q => q.slice(1));
-      playSong(nextSong, true);
+      playSong(nextSong);
     }
   }, [queue, playSong]);
 
@@ -193,12 +190,12 @@ export const PlayerProvider = ({ children }) => {
   const createPlaylist = useCallback((name) => {
     const newPlaylist = {
         id: v4(),
-        name: name || `New Playlist #${playlists.length}`,
+        name: name || `New Playlist`,
         tracks: []
     };
     setPlaylists(prev => [...prev, newPlaylist]);
     return newPlaylist;
-  }, [playlists.length]);
+  }, []);
 
   const deletePlaylist = useCallback((id) => {
     if (id === 'fav') return;
@@ -237,60 +234,6 @@ export const PlayerProvider = ({ children }) => {
     likedTracks.some(t => t && t.id === songId)
   , [likedTracks]);
 
-  const handleProgress = (state) => {
-    // Always update currentTime if it's playing and not seeking
-    // Remove the > 1 barrier for smoother tracking
-    setCurrentTime(state.playedSeconds);
-    
-    // Auto-detect duration if not yet set
-    if (duration === 0 && state.loadedSeconds > 0) {
-        setDuration(state.loadedSeconds);
-    }
-  };
-
-  const handleBuffer = () => setIsBuffering(true);
-  const handleBufferEnd = () => setIsBuffering(false);
-
-  const handleDuration = (dur) => {
-    if (dur && dur > 0) {
-        setDuration(dur);
-        setPlaybackError(null);
-    }
-  };
-
-  const handleError = (error) => {
-    console.error('Playback Error:', error);
-    
-    let message = 'Media playback failed. The source might be unavailable or restricted.';
-    if (currentSong?.audioUrl?.includes('youtube.com')) {
-        message = 'YouTube playback failed. This video might be restricted or blocked for embedding.';
-    } else if (currentSong?.audioUrl?.includes('soundcloud.com')) {
-        message = 'SoundCloud playback failed. The track might be private or geo-blocked.';
-    }
-    
-    setPlaybackError(message);
-    setIsPlaying(false);
-  };
-
-  // Native Audio Event Handlers
-  const onNativeTimeUpdate = () => {
-    if (audioRef.current) {
-        setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const onNativeLoadedMetadata = () => {
-    if (audioRef.current) {
-        setDuration(audioRef.current.duration);
-        setPlaybackError(null);
-    }
-  };
-
-  const onNativeWaiting = () => setIsBuffering(true);
-  const onNativePlaying = () => setIsBuffering(false);
-  const onNativeEnded = () => playNext();
-  const onNativeError = (e) => handleError(e);
-  
   const seekTo = useCallback((seconds) => {
     if (isNativeSource && audioRef.current) {
         audioRef.current.currentTime = seconds;
@@ -311,6 +254,9 @@ export const PlayerProvider = ({ children }) => {
     playlists,
     likedTracks,
     recentTracks,
+    searchResults,
+    isSearching,
+    searchTracks,
     playSong,
     togglePlay,
     playNext,
@@ -331,83 +277,36 @@ export const PlayerProvider = ({ children }) => {
     isBuffering
   }), [
     currentSong, isPlaying, volume, currentTime, duration, queue, 
-    playlists, likedTracks, recentTracks, playSong, togglePlay, 
-    playNext, playPrevious, setVolume, seekTo, addToQueue, 
-    removeFromQueue, createPlaylist, deletePlaylist, addTrackToPlaylist, 
-    removeTrackFromPlaylist, toggleLike, isLiked, playbackError, resumeAudio, isBuffering
+    playlists, likedTracks, recentTracks, searchResults, isSearching, 
+    searchTracks, playSong, togglePlay, playNext, playPrevious, setVolume, 
+    seekTo, addToQueue, removeFromQueue, createPlaylist, deletePlaylist, 
+    addTrackToPlaylist, removeTrackFromPlaylist, toggleLike, isLiked, 
+    playbackError, resumeAudio, isBuffering
   ]);
 
   return (
     <PlayerContext.Provider value={contextValue}>
       {children}
-      {currentSong && currentSong.audioUrl && (
-        <>
-            {/* Main Audio Engine */}
-            {isNativeSource ? (
-                <audio
-                    ref={audioRef}
-                    src={currentSong.audioUrl}
-                    onTimeUpdate={onNativeTimeUpdate}
-                    onLoadedMetadata={onNativeLoadedMetadata}
-                    onWaiting={onNativeWaiting}
-                    onPlaying={onNativePlaying}
-                    onEnded={onNativeEnded}
-                    onError={onNativeError}
-                    preload="auto"
-                />
-            ) : (
-                <div 
-                    id="youtube-player-container"
-                    style={{ 
-                        position: 'fixed', 
-                        bottom: '24px', 
-                        right: '24px', 
-                        width: '300px', 
-                        height: '200px', 
-                        opacity: 0.1, // Slightly more visible for sync confirmation
-                        pointerEvents: 'none', 
-                        zIndex: 1000, // Ensure it's in front of everything
-                        overflow: 'hidden',
-                        borderRadius: '12px',
-                        background: 'black'
-                    }}
-                >
-                    <ReactPlayer
-                        ref={playerRef}
-                        url={currentSong.audioUrl}
-                        playing={isPlaying}
-                        volume={volume}
-                        onProgress={handleProgress}
-                        onDuration={handleDuration}
-                        onBuffer={handleBuffer}
-                        onBufferEnd={handleBufferEnd}
-                        onError={handleError}
-                        onEnded={playNext}
-                        width="100%"
-                        height="100%"
-                        playsinline
-                        muted={false}
-                        config={{
-                            youtube: {
-                                playerVars: { 
-                                    autoplay: 1,
-                                    controls: 1,
-                                    playsinline: 1,
-                                    rel: 0,
-                                    showinfo: 0,
-                                    enablejsapi: 1,
-                                    iv_load_policy: 3
-                                }
-                            }
-                        }}
-                    />
-                </div>
-            )}
-            
-            {/* Gapless Preloader */}
-            <audio ref={nextAudioRef} style={{ display: 'none' }} preload="auto" />
-        </>
+      {currentSong && currentSong.audioUrl && !isNativeSource && (
+        <div id="react-player-bridge" style={{ display: 'none' }}>
+            <ReactPlayer
+                ref={playerRef}
+                url={currentSong.audioUrl}
+                playing={isPlaying}
+                volume={volume}
+                onProgress={(s) => setCurrentTime(s.playedSeconds)}
+                onDuration={(d) => setDuration(d)}
+                onBuffer={() => setIsBuffering(true)}
+                onBufferEnd={() => setIsBuffering(false)}
+                onError={(e) => console.error(e)}
+                onEnded={playNext}
+                width="0"
+                height="0"
+            />
+        </div>
       )}
+      <audio ref={audioRef} onEnded={playNext} onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)} />
+      <audio ref={nextAudioRef} style={{ display: 'none' }} preload="auto" />
     </PlayerContext.Provider>
   );
 };
