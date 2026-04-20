@@ -1,12 +1,16 @@
 import { useContext, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Search, Library, Plus, Heart, Music, Video } from 'lucide-react';
+import { Home, Search, Library, Plus, Heart, Music, Video, ListMusic } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PlayerContext } from '../context/PlayerContext';
 import ImportModal from './ImportModal';
 
 const Sidebar = () => {
-  const { playlists, likedTracks } = useContext(PlayerContext);
+  // Defensive Context Usage
+  const contextValue = useContext(PlayerContext);
+  const playlists = contextValue?.playlists || [];
+  const likedTracks = contextValue?.likedTracks || [];
+  
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   return (
@@ -40,23 +44,23 @@ const Sidebar = () => {
           <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1">
             <div className="flex flex-col gap-2">
               <NavLink to="/playlist/fav" className="p-3 rounded-lg flex items-center gap-4 hover:bg-white/5 transition-all group">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-400 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-400 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0">
                   <Heart size={24} fill="white" />
                 </div>
                 <div className="flex flex-col overflow-hidden">
                   <span className="text-sm font-black truncate">Liked Songs</span>
-                  <span className="text-xs text-white/40 font-bold truncate">Playlist • {likedTracks?.length || 0} songs</span>
+                  <span className="text-xs text-white/40 font-bold truncate">Playlist • {likedTracks.length} songs</span>
                 </div>
               </NavLink>
 
-              {Array.isArray(playlists) && playlists.filter(p => p.id !== 'fav').map(playlist => (
+              {playlists.filter(p => p && p.id !== 'fav').map(playlist => (
                 <NavLink key={playlist.id} to={`/playlist/${playlist.id}`} className="p-3 rounded-lg flex items-center gap-4 hover:bg-white/5 transition-all group">
-                  <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                  <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0">
                     <Music size={24} className="text-white/40" />
                   </div>
                   <div className="flex flex-col overflow-hidden text-left">
                     <span className="text-sm font-black truncate">{playlist.name}</span>
-                    <span className="text-xs text-white/40 font-bold truncate">Playlist • {playlist.tracks?.length || 0} songs</span>
+                    <span className="text-xs text-white/40 font-bold truncate">Playlist • {(playlist.tracks || []).length} songs</span>
                   </div>
                 </NavLink>
               ))}
@@ -88,7 +92,13 @@ const Sidebar = () => {
         </NavLink>
       </nav>
 
-      {isImportModalOpen && <ImportModal onClose={() => setIsImportModalOpen(false)} />}
+      {isImportModalOpen && contextValue?.addTrackToPlaylist && (
+        <ImportModal 
+            isOpen={isImportModalOpen} 
+            onClose={() => setIsImportModalOpen(false)} 
+            onImport={(url) => contextValue.importFromUrl?.(url)}
+        />
+      )}
     </>
   );
 };

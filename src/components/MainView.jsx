@@ -7,7 +7,8 @@ import {
   Music, 
   Video,
   Trash2,
-  ListMusic
+  ListMusic,
+  Play
 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import AlbumCard from './AlbumCard';
@@ -46,14 +47,15 @@ const MainView = () => {
   };
 
   const filteredResults = useMemo(() => {
-    if (selectedSource === 'all') return searchResults;
-    return searchResults.filter(track => track.source.toLowerCase() === selectedSource);
+    const results = Array.isArray(searchResults) ? searchResults : [];
+    if (selectedSource === 'all') return results;
+    return results.filter(track => track && track.source && track.source.toLowerCase() === selectedSource);
   }, [searchResults, selectedSource]);
 
   const currentPlaylist = useMemo(() => {
-    if (id === 'fav') return { name: 'Liked Songs', tracks: likedTracks };
+    if (id === 'fav') return { name: 'Liked Songs', tracks: likedTracks || [] };
     if (!Array.isArray(playlists)) return null;
-    return playlists.find(p => p.id === id);
+    return playlists.find(p => p && p.id === id);
   }, [id, playlists, likedTracks]);
 
   const itemVariants = {
@@ -65,7 +67,6 @@ const MainView = () => {
     <div className="h-full flex-1 flex flex-col bg-gradient-to-b from-white/[0.05] to-groovify-dark rounded-xl overflow-hidden ml-0 md:ml-2 shadow-2xl relative border border-white/5">
       
       <div className="flex-1 h-full overflow-y-auto custom-scrollbar bg-neutral-900/50 pb-40">
-        {/* Top Navbar */}
         <header className="sticky top-0 z-40 bg-[#121212]/95 backdrop-blur-md px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
             <div className="hidden md:flex gap-2">
@@ -105,8 +106,8 @@ const MainView = () => {
                   <img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1200" className="w-full h-full object-cover" alt="hero" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
                   <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8">
-                    <h1 className="text-3xl md:text-6xl font-black text-white">Groovy Vibes</h1>
-                    <p className="text-white/60 font-bold">Your personal music sanctuary</p>
+                    <h1 className="text-3xl md:text-6xl font-black text-white leading-none">Groovy Vibes</h1>
+                    <p className="text-white/60 font-bold mt-2">Your personal music sanctuary</p>
                   </div>
                 </div>
               </motion.div>
@@ -149,18 +150,19 @@ const MainView = () => {
 
             {view === 'playlist' && currentPlaylist && (
               <motion.div key={id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+                <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-white/5">
                   <div className="w-48 h-48 rounded-xl bg-neutral-800 flex items-center justify-center shadow-2xl shrink-0">
                     <Music size={80} className="text-white/10" />
                   </div>
                   <div className="text-center md:text-left">
-                    <h1 className="text-4xl md:text-7xl font-black text-white">{currentPlaylist.name}</h1>
-                    <p className="text-white/60 font-bold mt-2">{currentPlaylist.tracks?.length || 0} tracks</p>
+                    <span className="text-[10px] font-black uppercase text-groovify-green tracking-widest">Playlist</span>
+                    <h1 className="text-4xl md:text-6xl font-black text-white mt-2 leading-none">{currentPlaylist.name}</h1>
+                    <p className="text-white/60 font-bold mt-4">{(currentPlaylist.tracks || []).length} tracks</p>
                   </div>
                 </div>
 
                 <div className="grid-container">
-                  {currentPlaylist.tracks?.map(track => (
+                  {(currentPlaylist.tracks || []).map(track => (
                     <div key={track.id} className="relative group">
                       <AlbumCard data={track} />
                       {id !== 'fav' && (
