@@ -14,13 +14,8 @@ import { PlayerContext } from '../context/PlayerContext';
 import AlbumCard from './AlbumCard';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
-const SongCardSkeleton = () => (
-  <div className="bg-white/5 rounded-xl p-4 animate-pulse">
-    <div className="aspect-square bg-white/10 rounded-lg mb-4" />
-    <div className="h-4 bg-white/10 rounded w-3/4 mb-2" />
-    <div className="h-3 bg-white/10 rounded w-1/2" />
-  </div>
-);
+import Skeleton, { CardSkeleton } from './Skeleton';
+
 
 const MainView = () => {
   const { 
@@ -134,7 +129,7 @@ const MainView = () => {
 
                 <div className="grid-container">
                   {isSearching ? (
-                    Array(8).fill(0).map((_, i) => <SongCardSkeleton key={i} />)
+                    Array(8).fill(0).map((_, i) => <CardSkeleton key={i} />)
                   ) : filteredResults && filteredResults.length > 0 ? (
                     filteredResults.map(track => (
                       <motion.div key={track.id} variants={itemVariants} className="track-card">

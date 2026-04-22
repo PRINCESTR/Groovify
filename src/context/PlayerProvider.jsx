@@ -18,25 +18,25 @@ export const PlayerProvider = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackError, setPlaybackError] = useState(null);
-  
+
   // Search State
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   const audioRef = useRef(null);
   const nextAudioRef = useRef(null);
   const playerRef = useRef(null);
   const lastSearchTime = useRef(0);
-  
+
   // Dynamic Playlists
-  const [playlists, setPlaylists] = useState(() => 
+  const [playlists, setPlaylists] = useState(() =>
     appState.playlists || [{ id: 'fav', name: 'Liked Tracks', tracks: [] }]
   );
   const [recentTracks, setRecentTracks] = useState(() => appState.recent || []);
 
-  const likedTracks = useMemo(() => 
+  const likedTracks = useMemo(() =>
     (playlists || []).find(p => p && p.id === 'fav')?.tracks || []
-  , [playlists]);
+    , [playlists]);
 
   useEffect(() => {
     saveState({
@@ -70,38 +70,38 @@ export const PlayerProvider = ({ children }) => {
   const isNativeSource = useMemo(() => {
     if (!currentSong?.audioUrl) return false;
     const url = currentSong.audioUrl.toLowerCase();
-    return url.includes('.mp3') || 
-           url.includes('jamendo.com') || 
-           url.includes('bensound.com') ||
-           (!url.includes('youtube.com') && !url.includes('youtu.be') && !url.includes('soundcloud.com'));
+    return url.includes('.mp3') ||
+      url.includes('jamendo.com') ||
+      url.includes('bensound.com') ||
+      (!url.includes('youtube.com') && !url.includes('youtu.be') && !url.includes('soundcloud.com'));
   }, [currentSong]);
 
   useEffect(() => {
     if (audioRef.current) {
-        audioRef.current.volume = volume;
+      audioRef.current.volume = volume;
     }
   }, [volume]);
 
   // Core Play/Pause Control
   useEffect(() => {
     if (isNativeSource && audioRef.current) {
-        if (isPlaying) {
-            const playPromise = audioRef.current.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(err => {
-                console.warn("Autoplay blocked or playback fail:", err);
-              });
-            }
-        } else {
-            audioRef.current.pause();
+      if (isPlaying) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn("Autoplay blocked or playback fail:", err);
+          });
         }
+      } else {
+        audioRef.current.pause();
+      }
     }
   }, [isPlaying, isNativeSource, currentSong?.id]);
 
   const searchTracks = useCallback(async (query) => {
     if (!query || query.trim().length < 2) {
-        setSearchResults([]);
-        return;
+      setSearchResults([]);
+      return;
     }
 
     const searchId = Date.now();
@@ -109,24 +109,33 @@ export const PlayerProvider = ({ children }) => {
     setIsSearching(true);
 
     try {
-        const [jamendoTracks, youtubeTracks] = await Promise.all([
-            JamendoService.searchTracks(query).catch(e => { console.error(e); return []; }),
-            YouTubeService.searchTracks(query).catch(e => { console.error(e); return []; })
-        ]);
+      const [jamendoTracks, youtubeTracks] = await Promise.all([
+        JamendoService.searchTracks(query).catch(e => { console.error(e); return []; }),
+        YouTubeService.searchTracks(query).catch(e => { console.error(e); return []; })
+      ]);
 
-        if (lastSearchTime.current === searchId) {
-            const maxLength = Math.max(jamendoTracks.length, youtubeTracks.length);
-            const combined = [];
-            for (let i = 0; i < maxLength; i++) {
-                if (jamendoTracks[i]) combined.push(jamendoTracks[i]);
-                if (youtubeTracks[i]) combined.push(youtubeTracks[i]);
-            }
-            setSearchResults(combined);
+      if (lastSearchTime.current === searchId) {
+        if (youtubeTracks && youtubeTracks.error === 'quotaExceeded') {
+          setPlaybackError("YouTube search limit reached for today. Jamendo results are still available.");
+          const jamendoOnly = Array.isArray(jamendoTracks) ? jamendoTracks : [];
+          setSearchResults(jamendoOnly);
+          return;
         }
+
+        const ytResults = Array.isArray(youtubeTracks) ? youtubeTracks : [];
+        const jamResults = Array.isArray(jamendoTracks) ? jamendoTracks : [];
+        const maxLength = Math.max(jamResults.length, ytResults.length);
+        const combined = [];
+        for (let i = 0; i < maxLength; i++) {
+          if (jamResults[i]) combined.push(jamResults[i]);
+          if (ytResults[i]) combined.push(ytResults[i]);
+        }
+        setSearchResults(combined);
+      }
     } finally {
-        if (lastSearchTime.current === searchId) {
-            setIsSearching(false);
-        }
+      if (lastSearchTime.current === searchId) {
+        setIsSearching(false);
+      }
     }
   }, []);
 
@@ -167,7 +176,7 @@ export const PlayerProvider = ({ children }) => {
       setQueue(q => q.slice(1));
       playSong(nextSong);
     } else {
-        setIsPlaying(false);
+      setIsPlaying(false);
     }
   }, [queue, playSong]);
 
@@ -175,7 +184,7 @@ export const PlayerProvider = ({ children }) => {
     if (currentTime > 3) {
       seekTo(0);
     } else if (recentTracks.length > 1) {
-        playSong(recentTracks[1]);
+      playSong(recentTracks[1]);
     }
   }, [currentTime, recentTracks, playSong]);
 
@@ -189,9 +198,9 @@ export const PlayerProvider = ({ children }) => {
 
   const createPlaylist = useCallback((name) => {
     const newPlaylist = {
-        id: v4(),
-        name: name || `New Playlist`,
-        tracks: []
+      id: v4(),
+      name: name || `New Playlist`,
+      tracks: []
     };
     setPlaylists(prev => [...prev, newPlaylist]);
     return newPlaylist;
@@ -204,40 +213,40 @@ export const PlayerProvider = ({ children }) => {
 
   const addTrackToPlaylist = useCallback((playlistId, track) => {
     setPlaylists(prev => prev.map(p => {
-        if (p.id === playlistId) {
-            if (p.tracks.some(t => t.id === track.id)) return p;
-            return { ...p, tracks: [...p.tracks, track] };
-        }
-        return p;
+      if (p.id === playlistId) {
+        if (p.tracks.some(t => t.id === track.id)) return p;
+        return { ...p, tracks: [...p.tracks, track] };
+      }
+      return p;
     }));
   }, []);
 
   const removeTrackFromPlaylist = useCallback((playlistId, trackId) => {
     setPlaylists(prev => prev.map(p => {
-        if (p.id === playlistId) {
-            return { ...p, tracks: p.tracks.filter(t => t.id !== trackId) };
-        }
-        return p;
+      if (p.id === playlistId) {
+        return { ...p, tracks: p.tracks.filter(t => t.id !== trackId) };
+      }
+      return p;
     }));
   }, []);
 
   const toggleLike = useCallback((song) => {
     const isCurrentlyLiked = likedTracks.some(t => t.id === song.id);
     if (isCurrentlyLiked) {
-        removeTrackFromPlaylist('fav', song.id);
+      removeTrackFromPlaylist('fav', song.id);
     } else {
-        addTrackToPlaylist('fav', song);
+      addTrackToPlaylist('fav', song);
     }
   }, [likedTracks, addTrackToPlaylist, removeTrackFromPlaylist]);
 
-  const isLiked = useCallback((songId) => 
+  const isLiked = useCallback((songId) =>
     likedTracks.some(t => t && t.id === songId)
-  , [likedTracks]);
+    , [likedTracks]);
 
   const seekTo = useCallback((seconds) => {
     if (isNativeSource && audioRef.current) {
-        audioRef.current.currentTime = seconds;
-        setCurrentTime(seconds);
+      audioRef.current.currentTime = seconds;
+      setCurrentTime(seconds);
     } else if (playerRef.current) {
       playerRef.current.seekTo(seconds, 'seconds');
       setCurrentTime(seconds);
@@ -246,13 +255,13 @@ export const PlayerProvider = ({ children }) => {
 
   const handleNativeTimeUpdate = () => {
     if (audioRef.current) {
-        setCurrentTime(audioRef.current.currentTime);
+      setCurrentTime(audioRef.current.currentTime);
     }
   };
 
   const handleNativeLoadedMetadata = () => {
     if (audioRef.current) {
-        setDuration(audioRef.current.duration);
+      setDuration(audioRef.current.duration);
     }
   };
 
@@ -263,65 +272,109 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const contextValue = useMemo(() => ({
-    currentSong, isPlaying, volume, currentTime, duration, queue, 
-    playlists, likedTracks, recentTracks, searchResults, isSearching, 
-    searchTracks, playSong, togglePlay, playNext, playPrevious, setVolume, 
-    seekTo, addToQueue, removeFromQueue, createPlaylist, deletePlaylist, 
-    addTrackToPlaylist, removeTrackFromPlaylist, toggleLike, isLiked, 
+    currentSong, isPlaying, volume, currentTime, duration, queue,
+    playlists, likedTracks, recentTracks, searchResults, isSearching,
+    searchTracks, playSong, togglePlay, playNext, playPrevious, setVolume,
+    seekTo, addToQueue, removeFromQueue, createPlaylist, deletePlaylist,
+    addTrackToPlaylist, removeTrackFromPlaylist, toggleLike, isLiked,
     playbackError, setPlaybackError, resumeAudio, isBuffering
   }), [
-    currentSong, isPlaying, volume, currentTime, duration, queue, 
-    playlists, likedTracks, recentTracks, searchResults, isSearching, 
-    searchTracks, playSong, togglePlay, playNext, playPrevious, setVolume, 
-    seekTo, addToQueue, removeFromQueue, createPlaylist, deletePlaylist, 
-    addTrackToPlaylist, removeTrackFromPlaylist, toggleLike, isLiked, 
+    currentSong, isPlaying, volume, currentTime, duration, queue,
+    playlists, likedTracks, recentTracks, searchResults, isSearching,
+    searchTracks, playSong, togglePlay, playNext, playPrevious, setVolume,
+    seekTo, addToQueue, removeFromQueue, createPlaylist, deletePlaylist,
+    addTrackToPlaylist, removeTrackFromPlaylist, toggleLike, isLiked,
     playbackError, resumeAudio, isBuffering
   ]);
 
   return (
     <PlayerContext.Provider value={contextValue}>
       {children}
-      
-      <div id="media-engine-bridge" style={{ position: 'fixed', bottom: -100, opacity: 0, pointerEvents: 'none' }}>
-        {currentSong && currentSong.audioUrl && (
-          <div key={currentSong.id}>
-            {isNativeSource ? (
-              <audio
-                ref={audioRef}
-                src={currentSong.audioUrl}
-                onTimeUpdate={handleNativeTimeUpdate}
-                onLoadedMetadata={handleNativeLoadedMetadata}
-                onWaiting={() => setIsBuffering(true)}
-                onPlaying={() => setIsBuffering(false)}
-                onEnded={playNext}
-                onError={handleNativeError}
-                preload="auto"
-                autoPlay={isPlaying}
-              />
-            ) : (
-              <ReactPlayer
-                ref={playerRef}
-                url={currentSong.audioUrl}
-                playing={isPlaying}
-                volume={volume}
-                onProgress={(s) => setCurrentTime(s.playedSeconds)}
-                onDuration={(d) => setDuration(d)}
-                onBuffer={() => setIsBuffering(true)}
-                onBufferEnd={() => setIsBuffering(false)}
-                onError={(e) => {
-                    console.error("YouTube Error:", e);
-                    setPlaybackError("YouTube playback failed.");
-                    setIsPlaying(false);
-                }}
-                onEnded={playNext}
-                width="1px"
-                height="1px"
-                playsinline
-              />
-            )}
-          </div>
+
+      <div
+        id="media-engine-bridge"
+        style={{
+          position: 'fixed',
+          bottom: '0px',
+          right: '0px',
+          width: '1px',
+          height: '1px',
+          opacity: 0.1,
+          zIndex: -1,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+          backgroundColor: 'black'
+        }}
+      >
+        {/* Native Audio Hook */}
+        <audio
+          ref={audioRef}
+          src={isNativeSource && currentSong ? currentSong.audioUrl : ''}
+          onTimeUpdate={handleNativeTimeUpdate}
+          onLoadedMetadata={handleNativeLoadedMetadata}
+          onWaiting={() => setIsBuffering(true)}
+          onPlaying={() => setIsBuffering(false)}
+          onEnded={playNext}
+          onError={handleNativeError}
+          preload="auto"
+          autoPlay={isPlaying && isNativeSource}
+        />
+
+        {/* YouTube Engine */}
+        <ReactPlayer
+          ref={playerRef}
+          url={!isNativeSource && currentSong ? currentSong.audioUrl : ''}
+          playing={isPlaying && !isNativeSource}
+          volume={volume}
+          onProgress={(s) => !isNativeSource && setCurrentTime(s.playedSeconds)}
+          onDuration={(d) => !isNativeSource && setDuration(d)}
+          onReady={(p) => {
+            console.log("YT Ready");
+            if (!isNativeSource) setDuration(p.getInternalPlayer()?.getDuration() || 0);
+          }}
+          onStart={() => console.log("YT Start")}
+          onError={(e) => {
+            if (!isNativeSource && currentSong) {
+              console.error("YouTube Playback Error:", e);
+              // Handle potential API block or restricted video
+              if (e === 150 || e === 101) {
+                setPlaybackError("This video is restricted or cannot be played embedded.");
+              } else {
+                setPlaybackError("YouTube playback failed.");
+              }
+              setIsPlaying(false);
+            }
+          }}
+          onBuffer={() => setIsBuffering(true)}
+          onBufferEnd={() => setIsBuffering(false)}
+          onEnded={playNext}
+          width="100%"
+          height="100%"
+          config={{
+            youtube: {
+              playerVars: {
+                autoplay: 1,
+                controls: 0,
+                modestbranding: 1,
+                rel: 0,
+                showinfo: 0,
+                iv_load_policy: 3,
+                origin: window.location.origin,
+                enablejsapi: 1
+              }
+            }
+          }}
+        />
+
+        {/* Invisible preloader for next song */}
+        {queue.length > 0 && queue[0].audioUrl && (
+          <audio
+            ref={nextAudioRef}
+            src={queue[0].audioUrl}
+            style={{ display: 'none' }}
+            preload="auto"
+          />
         )}
-        <audio ref={nextAudioRef} style={{ display: 'none' }} preload="auto" />
       </div>
     </PlayerContext.Provider>
   );
