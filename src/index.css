@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-groovify-black text-white font-sans overflow-hidden antialiased;
+    @apply bg-zwp-black text-white font-sans overflow-hidden antialiased;
   }
 }
 
@@ -15,11 +15,11 @@
   --mobile-nav-height: 75px;
   
   /* Premium Palette */
-  --groovify-green: #1ed760;
-  --groovify-black: #000000;
-  --groovify-dark: #121212;
-  --groovify-surface: #181818;
-  --groovify-surface-light: #282828;
+  --zwp-green: #1ed760;
+  --zwp-black: #000000;
+  --zwp-dark: #121212;
+  --zwp-surface: #181818;
+  --zwp-surface-light: #282828;
   
   /* Effects */
   --glass-bg: rgba(18, 18, 18, 0.7);

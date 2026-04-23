@@ -49,7 +49,7 @@ const AlbumCard = memo(({ data }) => {
         <div className={`absolute bottom-2 right-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ${isThisPlaying ? 'opacity-100 translate-y-0' : ''}`}>
           <button
             onClick={handlePlayClick}
-            className="w-12 h-12 rounded-full bg-groovify-green flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all text-black"
+            className="w-12 h-12 rounded-full bg-zwp-green flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all text-black"
           >
             {isPlayingCurrent ? (
               <Pause fill="black" size={24} />
@@ -61,10 +61,10 @@ const AlbumCard = memo(({ data }) => {
 
         {/* EQ Animation when playing */}
         {isPlayingCurrent && (
-          <div className="absolute top-2 left-2 flex items-end gap-0.5 h-6 opacity-80 backdrop-blur-md bg-black/40 p-1 rounded">
-            <motion.div animate={{ height: [4, 16, 4] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-1 bg-groovify-green rounded-full" />
-            <motion.div animate={{ height: [8, 20, 8] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1 bg-groovify-green rounded-full" />
-            <motion.div animate={{ height: [6, 14, 6] }} transition={{ repeat: Infinity, duration: 0.7 }} className="w-1 bg-groovify-green rounded-full" />
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center gap-1 backdrop-blur-sm rounded-xl">
+            <motion.div animate={{ height: [4, 16, 4] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-1 bg-zwp-green rounded-full" />
+            <motion.div animate={{ height: [8, 20, 8] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1 bg-zwp-green rounded-full" />
+            <motion.div animate={{ height: [6, 14, 6] }} transition={{ repeat: Infinity, duration: 0.7 }} className="w-1 bg-zwp-green rounded-full" />
           </div>
         )}
 
@@ -105,7 +105,9 @@ const AlbumCard = memo(({ data }) => {
                     onClick={() => { toggleLike(data); setShowMenu(false); }}
                     className="flex items-center gap-3 p-2.5 rounded-md hover:bg-white/10 text-sm font-bold text-white/60 hover:text-white transition-colors text-left"
                 >
-                    <Heart size={16} className={liked ? 'text-groovify-green fill-groovify-green' : ''} />
+                    <button onClick={handleLike} className="p-2 -mr-2 hover:scale-110 active:scale-95 transition-all">
+                      <Heart size={16} className={liked ? 'text-zwp-green fill-zwp-green' : ''} />
+                    </button>    
                     {liked ? 'Remove from Liked' : 'Add to Liked'}
                 </button>
                 <div className="h-px bg-white/5 my-1" />

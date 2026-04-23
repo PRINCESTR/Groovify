@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'groovify_data_v2'; // Bump version
+const STORAGE_KEY = 'zwp_data_v2'; // Bump version
 
 const defaultState = {
   playlists: [{ id: 'fav', name: 'Liked Tracks', tracks: [] }],

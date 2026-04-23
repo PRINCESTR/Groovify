@@ -107,7 +107,7 @@ const Player = () => {
                 onClick={(e) => { e.stopPropagation(); toggleLike(currentSong); }}
                 className={`transition-all hover:scale-110 active:scale-95 ${isFullScreen ? 'md:ml-2' : 'ml-auto md:ml-2'}`}
               >
-                <Heart size={20} className={isLiked(currentSong.id) ? "text-groovify-green fill-groovify-green" : "text-white/40 hover:text-white"} />
+                <Heart size={20} className={isLiked(currentSong.id) ? "text-zwp-green fill-zwp-green" : "text-white/40 hover:text-white"} />
               </button>
             </div>
 
@@ -143,7 +143,7 @@ const Player = () => {
                   className="flex-1 h-1 bg-white/10 rounded-full cursor-pointer relative group"
                 >
                   <div 
-                    className="absolute top-0 left-0 h-full bg-groovify-green rounded-full group-hover:bg-emerald-400" 
+                    className="absolute top-0 left-0 h-full bg-zwp-green rounded-full group-hover:bg-emerald-400" 
                     style={{ width: `${progressPercentage}%` }}
                   />
                 </div>
@@ -175,13 +175,13 @@ const Player = () => {
                   step="0.01" 
                   value={volume}
                   onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="w-24 accent-groovify-green h-1 cursor-pointer bg-white/10 rounded-full"
+                  className="w-24 accent-zwp-green h-1 cursor-pointer bg-white/10 rounded-full"
                  />
               </div>
               
               <button 
                 onClick={() => setIsQueueOpen(!isQueueOpen)}
-                className={`p-2 rounded-full transition-all ${isQueueOpen ? 'text-groovify-green' : 'text-white/40 hover:text-white'}`}
+                className={`p-2 rounded-full transition-all ${isQueueOpen ? 'text-zwp-green' : 'text-white/40 hover:text-white'}`}
               >
                 <ListMusic size={24} />
               </button>

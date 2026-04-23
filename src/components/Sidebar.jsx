@@ -15,6 +15,10 @@ const Sidebar = () => {
     <>
       <aside id="main-sidebar" className="w-[280px] flex-col gap-2 shrink-0 h-full hidden md:flex">
         <nav className="bg-neutral-900 rounded-xl p-4 flex flex-col gap-4 shadow-xl">
+          <div className="flex items-center gap-3 mb-2 px-1">
+            <img src="/logo.png" alt="Zwp Logo" className="w-8 h-8 object-contain" />
+            <span className="text-xl font-black tracking-tight text-white">Zwp</span>
+          </div>
           <NavLink to="/" className={({ isActive }) => `flex items-center gap-4 text-sm font-black transition-all hover:text-white ${isActive ? 'text-white' : 'text-white/60'}`}>
             <Home size={28} strokeWidth={2.5} />
             <span>Home</span>

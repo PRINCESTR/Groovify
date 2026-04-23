@@ -7,8 +7,8 @@ const MainView = lazy(() => import('./components/MainView'));
 const Player = lazy(() => import('./components/Player'));
 
 const PageLoader = () => (
-  <div className="flex-1 flex items-center justify-center bg-groovify-black">
-    <div className="w-12 h-12 border-4 border-groovify-green border-t-transparent rounded-full animate-spin" />
+  <div className="flex-1 flex items-center justify-center bg-zwp-black">
+    <div className="w-12 h-12 border-4 border-zwp-green border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
@@ -16,7 +16,7 @@ function App() {
   return (
     <PlayerProvider>
       <BrowserRouter>
-        <div className="flex h-screen w-full bg-groovify-black text-white overflow-hidden relative font-sans">
+        <div className="flex h-screen w-full bg-zwp-black text-white overflow-hidden relative font-sans">
           
           {/* Main Layout Area */}
           <div className="flex flex-1 overflow-hidden h-full pb-[90px]">

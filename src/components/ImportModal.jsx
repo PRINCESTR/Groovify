@@ -46,7 +46,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg bg-groovify-dark border border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8"
+            className="relative w-full max-w-lg bg-zwp-dark border border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8"
           >
             <button 
               onClick={onClose}
@@ -56,12 +56,12 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
             </button>
 
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-groovify-green/20 flex items-center justify-center text-groovify-green">
+              <div className="w-12 h-12 rounded-2xl bg-zwp-green/20 flex items-center justify-center text-zwp-green">
                 <Link size={24} />
               </div>
               <div>
                 <h2 className="text-2xl font-black text-white tracking-tighter">Import Music</h2>
-                <p className="text-sm text-groovify-text-sub font-bold">Paste a link to add to your library</p>
+                <p className="text-sm text-zwp-text-sub font-bold">Paste a link to add to your library</p>
               </div>
             </div>
 
@@ -73,7 +73,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
                   placeholder="https://www.youtube.com/watch?v=..."
                   value={url}
                   onChange={(e) => { setUrl(e.target.value); setError(''); }}
-                  className="w-full h-14 pl-12 pr-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold outline-none focus:ring-2 focus:ring-groovify-green/50 focus:border-groovify-green/50 transition-all"
+                  className="w-full h-14 pl-12 pr-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold outline-none focus:ring-2 focus:ring-zwp-green/50 focus:border-zwp-green/50 transition-all"
                 />
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20">
                   {url.includes('youtube') ? <Play size={20} className="text-red-500" /> : url.includes('soundcloud') ? <Music size={20} className="text-orange-500" /> : <Link size={20} />}

@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        groovify: {
+        zwp: {
           green: '#1db954',
           'green-hover': '#1ed760',
           black: '#000000',

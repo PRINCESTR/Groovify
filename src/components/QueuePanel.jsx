@@ -20,7 +20,7 @@ const QueuePanel = ({ isOpen, onClose }) => {
             <h2 className="text-2xl font-black text-white tracking-tight">Queue</h2>
             <button 
                 onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-full text-groovify-text-sub hover:text-white transition-all shadow-lg"
+                className="p-2 hover:bg-white/10 rounded-full text-zwp-text-sub hover:text-white transition-all shadow-lg"
             >
                 <X size={24} />
             </button>
@@ -29,15 +29,15 @@ const QueuePanel = ({ isOpen, onClose }) => {
           <div className="mb-8">
             <p className="text-xs font-black text-white/40 uppercase tracking-widest mb-4">Now Playing</p>
             {currentSong ? (
-                <div className="flex items-center gap-4 p-3 rounded-xl bg-groovify-green/10 border border-groovify-green/20 group">
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-zwp-green/10 border border-zwp-green/20 group">
                     <img src={currentSong.imageUrl} alt="now playing" className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1 overflow-hidden">
-                        <p className="text-groovify-green font-black truncate">{currentSong.title}</p>
-                        <p className="text-groovify-text-sub text-xs font-bold truncate opacity-70">{currentSong.artist}</p>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-zwp-green font-black truncate">{currentSong.title}</p>
+                        <p className="text-zwp-text-sub text-xs font-bold truncate opacity-70">{currentSong.artist}</p>
                     </div>
                 </div>
             ) : (
-                <p className="text-groovify-text-sub italic text-sm">Nothing is playing</p>
+                <p className="text-zwp-text-sub italic text-sm">Nothing is playing</p>
             )}
           </div>
 
@@ -62,20 +62,20 @@ const QueuePanel = ({ isOpen, onClose }) => {
                             <Play size={16} fill="white" className="text-white" />
                         </button>
                     </div>
-                    <div className="flex-1 overflow-hidden">
-                        <p className="text-white font-bold text-sm truncate">{track.title}</p>
-                        <p className="text-groovify-text-sub text-xs font-bold truncate opacity-60">{track.artist}</p>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-black truncate">{track.title}</p>
+                        <p className="text-zwp-text-sub text-xs font-bold truncate opacity-60">{track.artist}</p>
                     </div>
                     <button 
                         onClick={() => removeFromQueue(index)}
-                        className="p-2 opacity-0 group-hover:opacity-100 text-groovify-text-sub hover:text-red-500 transition-all"
+                        className="p-2 opacity-0 group-hover:opacity-100 text-zwp-text-sub hover:text-red-500 transition-all"
                     >
                         <Trash2 size={16} />
                     </button>
                   </motion.div>
                 ))
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-groovify-text-sub opacity-30 gap-4 mt-20">
+                <div className="flex-1 flex flex-col items-center justify-center text-zwp-text-sub opacity-30 gap-4 mt-20">
                     <ListMusic size={64} strokeWidth={1} />
                     <p className="text-sm font-black">Your queue is empty</p>
                 </div>

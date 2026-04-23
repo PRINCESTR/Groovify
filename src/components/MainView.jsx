@@ -59,7 +59,7 @@ const MainView = () => {
   };
 
   return (
-    <div className="h-full flex-1 flex flex-col bg-gradient-to-b from-white/[0.05] to-groovify-dark rounded-xl overflow-hidden ml-0 md:ml-2 shadow-2xl relative border border-white/5">
+    <div className="h-full flex-1 flex flex-col bg-gradient-to-b from-white/[0.05] to-zwp-dark rounded-xl overflow-hidden ml-0 md:ml-2 shadow-2xl relative border border-white/5">
       
       <div className="flex-1 h-full overflow-y-auto custom-scrollbar bg-neutral-900/50 pb-40">
         <header className="sticky top-0 z-40 bg-[#121212]/95 backdrop-blur-md px-4 md:px-8 py-4 flex items-center justify-between">
@@ -87,7 +87,7 @@ const MainView = () => {
           </div>
 
           <div className="flex items-center gap-2 ml-4">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-groovify-green to-emerald-400 flex items-center justify-center text-black font-black text-sm cursor-pointer shadow-lg">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-zwp-green to-emerald-400 flex items-center justify-center text-black font-black text-sm cursor-pointer shadow-lg">
               P
             </div>
           </div>
@@ -101,7 +101,7 @@ const MainView = () => {
                   <img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1200" className="w-full h-full object-cover" alt="hero" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
                   <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8">
-                    <h1 className="text-3xl md:text-6xl font-black text-white leading-none">Groovy Vibes</h1>
+                    <h1 className="text-3xl md:text-6xl font-black text-white leading-none">Zwp Vibes</h1>
                     <p className="text-white/60 font-bold mt-2">Your personal music sanctuary</p>
                   </div>
                 </div>
@@ -150,7 +150,7 @@ const MainView = () => {
                     <Music size={80} className="text-white/10" />
                   </div>
                   <div className="text-center md:text-left">
-                    <span className="text-[10px] font-black uppercase text-groovify-green tracking-widest">Playlist</span>
+                    <span className="text-[10px] font-black uppercase text-zwp-green tracking-widest">Playlist</span>
                     <h1 className="text-4xl md:text-6xl font-black text-white mt-2 leading-none">{currentPlaylist.name}</h1>
                     <p className="text-white/60 font-bold mt-4">{(currentPlaylist.tracks || []).length} tracks</p>
                   </div>
